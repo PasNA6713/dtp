@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+
+{% load static %}
+{{ logged|json_script:"logged" }}
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+
+  <title>Safety map</title>
+  <!-- VueJS -->
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.x/dist/vue.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js"></script>
+  <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@mdi/font@5.x/css/materialdesignicons.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+  <script src="https://unpkg.com/axios@0.20.0/dist/axios.min.js"></script>
+
+  <!-- Yandex Map -->
+  <script src="https://api-maps.yandex.ru/2.1/?apikey=e70694c3-ce7f-4459-b7f6-be3d53e2cc8e&lang=ru_RU" type="text/javascript"></script>
+  <script src="https://yastatic.net/s3/mapsapi-jslibs/heatmap/0.0.1/heatmap.min.js" type="text/javascript"></script>
+
+  <!-- Bootstrap -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+  <!-- Slider -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-slider/11.0.2/css/bootstrap-slider.min.css" integrity="sha512-3q8fi8M0VS+X/3n64Ndpp6Bit7oXSiyCnzmlx6IDBLGlY5euFySyJ46RUlqIVs0DPCGOypqP8IRk/EyPvU28mQ==" crossorigin="anonymous" />
+  <!-- Jquery ajax -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+ 
+  <link rel="stylesheet" href="{% static 'map/css/Footer-Dark.css' %}">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+</head>
+
+<body style="background-color: #e8e8e8;">
+  <div id="app">
+  <nav class="navbar navbar-dark navbar-expand-md" 
+  style="
+    background-color: #3E3F3A !important;
+    line-height: 1.4285em;
+    font-family: Lato,'Helvetica Neue',Arial,Helvetica,sans-serif;">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="#" style="font-size: 40px;">
+            <i class="fas fa-car-crash"></i>
+            <strong>Safety </strong>Map
+        </a>
+        <button data-toggle="collapse" class="navbar-toggler" data-target="#navcol-1">
+        <span class="sr-only">Toggle navigation</span><span class="navbar-toggler-icon"></span></button>
+        <div
+            class="collapse navbar-collapse" id="navcol-1">
+            <ul class="nav navbar-nav ml-auto" style="filter: hue-rotate(0deg) sepia(0%);margin: 100;">
+                <li class="nav-item" role="presentation"><a class="nav-link" :href="'http://127.0.0.1:8000'+ '?logged=' + logged" style="font-size: 20px;" v-if='!logged'>Главная страница</a></li>
+                <li class="nav-item" role="presentation"><a class="nav-link" href="http://127.0.0.1:8000/about_project" style="font-size: 20px;" v-if='!logged'>О проекте</a></li>
+                <li class="nav-item" role="presentation"><a class="nav-link" :href="'http://127.0.0.1:8000/statistic?logged='+logged" style="font-size: 20px;">Статистика</a></li>
+                <li class="nav-item" role="presentation"><a class="nav-link active" href="#" style="font-size: 20px;">Карта</a></li>
+                <li class="nav-item" role="presentation"><a class="nav-link" href="http://127.0.0.1:8000/about_us" style="font-size: 20px;" v-if='!logged'>О нас</a></li>
+                <li class="nav-item ml-2" role="presentation" v-if="logged">
+                  <a class="nav-link" @click="logged = false" v-if='logged' style="font-size: 20px;">Выйти</a>
+                </li>
+            </ul>
+    </div>
+    </div>
+  </nav>
+
+  <center>
+        <div class="container p-2" style="border: darkgrey solid 3px; border-radius: 40px; background-color: white;">
+      <!-- First Selectors Row -->
+        <div class="row d-flex justify-content-center">
+          <!-- Select Region -->
+          <div class="col-6">
+            <label for="region" style="color: black; font-weight: 600;">Регион:</label>
+            <select class="form-control" id="region" v-model="region" @change='change_map'>
+                <option>Республика Татарстан</option>
+                <option>Санкт-Петербург</option>
+            </select>
+          </div>
+
+          <!-- Select Month -->
+          <div class="col-3 text-left">
+            <label for="month" style="color: black; font-weight: 600;">Месяц:</label>
+            <select class="form-control" id="month" v-model="month" @change='change_map'>
+                <option>Все время</option>
+                <option>Сентябрь</option>
+                <option>Октябрь</option>
+                <option>Ноябрь</option>
+                <option>Декабрь</option>
+                <option>Январь</option>
+                <option>Февраль</option>
+                <option>Март</option>
+                <option>Апрель</option>
+                <option>Май</option>
+                <option>Июнь</option>
+                <option>Июль</option>
+                <option>Август</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Second Selectors Row -->
+        <div class="row d-flex text-left justify-content-center">
+          <!-- Select Light -->
+          <div class="col-3">
+              <label for="light" style="color: black; font-weight: 600;">Освещение:</label>
+              <select class="form-control" id="light" v-model="light" @change='change_map'>
+                  <option>Не указано</option>
+                  <option>День</option>
+                  <option>Сумерки</option>
+                  <option>Освещение включено</option>
+                  <option>Освещение не включено</option>
+                  <option>Освещение отсутствует</option>
+              </select>
+          </div>
+
+          <!-- Select Weather -->
+          <div class="col-3">
+            <label for="weather" style="color: black; font-weight: 600;">Погода:</label>
+            <select class="form-control" id="weather" v-model="weather" @change='change_map'>
+                <option>Любая</option>
+                <option>Дождь</option>
+                <option>Пасмурно</option>
+                <option>Ясно</option>
+                <option>Снегопад</option>
+            </select>
+          </div>
+
+          <!-- Select affected -->
+          <div class="col-3">
+            <label for="affected" style="color: black; font-weight: 600;">Пострадавшие:</label>
+            <select class="form-control" id="affected" v-model="affected" @change='change_map'>
+                <option>Не указано</option>
+                <option>Есть пострадавшие</option>
+                <option>Есть погибшие</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Third Selectors Row -->
+        <div class="row d-flex text-left justify-content-center">
+          <!-- Select Type -->
+          <div class="col-3">
+            <label for="type" style="color: black; font-weight: 600;">Тип ДТП:</label>
+            <select class="form-control" id="type" v-model="type" @change='change_map'>
+                <option>Не указан</option>
+                <option>Столкновение</option>
+                <option>Наезд на пешехода</option>
+                <option>Падение пассажира</option>
+                <option>Наезд на препятствие</option>
+                <option>Наезд на велосипедиста</option>
+                <option>Опрокидывание</option>
+                <option>Наезд на стоящее ТС</option>
+                <option>Съезд с дороги</option>
+                <option>Иной вид ДТП</option>
+            </select>
+          </div>
+
+          <!-- Select Сity -->
+          <div class="col-3">
+            <label for="location" style="color: black; font-weight: 600;">Местность:</label>
+            <select class="form-control" id="location" v-model="location" @change='change_map'>
+                <option>Город</option>
+                <option>Пригород</option>
+            </select>
+          </div>
+          
+          <div v-if="logged" class="col-3 align-self-end">
+            <button type="button" class="btn btn-primary alighn-bottom" @click="change_camera_map">Рассчитать положение камер</button>
+          </div>
+        </div>
+
+        <!-- Camera number -->
+        <div v-if="logged" class="row justify-content-center">
+            <div class="col mt-2 mb-4">
+              <label for="patrols_number" style="color: black; font-weight: 600;">Количество камер:</label>
+              <input type="number" class="form-control col-5" id="patrols_number" placeholder="Введите количество кластеров" v-model="camera_number" @change='change_map'>
+            </div>
+        </div>
+
+        <!-- Scroll time -->
+        <input id="ex21"
+              data-provide="slider"
+              data-slider-ticks="[1, 2, 3, 4, 5]"
+              data-slider-ticks-labels='["2.00 - 11.00", "11.00 - 16.00", "16.00 - 21.00", "21.00 - 2.00", "Все время"]'
+              data-slider-min="1"
+              data-slider-max="4"
+              data-slider-step="1"
+              data-slider-value="1"
+              data-slider-tooltip="hide"
+              style="width: 500px;"
+        />
+        </div>
+
+        <!-- Map -->
+        <div class="row justify-content-center mt-3">
+          <div v-if="logged" style="background-color: white; border-radius: 40px; border: darkgrey solid 1px; border-radius: 40px; padding: 20px;">
+            <label for="light" style="color: black; font-weight: 600;">Концентрация ДТП:</label>
+            <div class="border primary-border" id="map" style="width: 800px; height: 600px"></div>
+          </div>
+          <!-- Unlogged map -->
+          <div v-else class="mb-2" style="background-color: white; border-radius: 40px; border: darkgrey solid 1px; border-radius: 40px; padding: 20px;">
+            <label for="light" style="color: black; font-weight: 600;">Концентрация ДТП:</label>
+            <div class="border primary-border" id="map" style="width: 1400px; height: 600px"></div>
+          </div>
+          <div v-if="logged" style="background-color: white; border-radius: 40px; border: darkgrey solid 1px; border-radius: 40px; padding: 20px;">
+            <label for="light" style="color: black; font-weight: 600;">Опасные участки дороги:</label>
+            <div class="border primary-border" id="map2" style="width: 800px; height: 600px;">
+
+              <!-- Loading Circle -->
+                <div v-if="!loaded">
+                <template>
+                  <div class="text-center" style="position: absolute; top: 860px; right: 470px; z-index: 1000;">
+                    <v-progress-circular
+                      indeterminate
+                      :size="70"
+                      :width="7"
+                      color="primary"
+                    ></v-progress-circular>
+                  </div>
+                </template>
+                <div  id="gray" style="width: 800px; height: 600px ; opacity: 0.5; padding: 15px; background-color: rgba(1,1,1,0.6); position: absolute; left: 972px; right: 0; top:609px; bottom: 0; display: flex; z-index:100; overflow: auto;"></div>
+                </div>
+
+            </div>
+          </div>
+        </div>
+
+        <div v-if='logged === "admin"'>
+          <a class="btn btn-primary mt-2" v-if="!display_create_user" @click="display_create_user = true">Создать пользователя</a>
+          <div class="container justify-content-center" v-if="display_create_user">
+              <div class="col-3">
+                  <select class="form-control" id="type" v-model="permissons">
+                      <option>Администратор</option>
+                      <option>Пользователь</option>
+                  </select>
+                  <input type="text" class="form-control" placeholder="Введите имя пользователя" v-model="user_name">
+                  <input type="text" class='form-control' placeholder="Введите пароль" v-model="user_passwd">
+                  <input type="text" :class="['form-control', 'border', {'border-danger': !valide_password}, {'border-success': valide_password}]"
+                  placeholder="Подтвердите пароль" @change="validate" v-model="control_passwd">
+                  <a class="btn btn-primary" @click="register_user">Создать пользователя</a>
+              </div>
+          </div>
+      </div>
+
+        <div class="mt-2" v-if='logged === "admin"'>
+          <a class="btn btn-light" v-if="!display_add_point" @click="display_add_point = true">Добавить точку</a>
+          <div class="container justify-content-center" v-if="display_add_point">
+            <div class="row justify-content-center">
+                  <input type="number" class="form-control col-3" placeholder="Широта" v-model="latitude">
+                  <input type="number" class='form-control col-3' placeholder="Долгота" v-model="longitude">
+                  <input type="number" class='form-control col-3' placeholder="Количество пострадавших" v-model="RAN">
+            </div>
+            <div class="row justify-content-center">
+                  <select class="form-control col-3" v-model="DTP_V">
+                    <option>Столкновение</option>
+                    <option>Наезд на пешехода</option>
+                    <option>Падение пассажира</option>
+                    <option>Наезд на препятствие</option>
+                    <option>Наезд на велосипедиста</option>
+                    <option>Опрокидывание</option>
+                    <option>Наезд на стоящее ТС</option>
+                    <option>Съезд с дороги</option>
+                    <option>Иной вид ДТП</option>
+                  </select>
+                  <select class="form-control col-3" v-model="s_pog">
+                    <option>Дождь</option>
+                    <option>Пасмурно</option>
+                    <option>Ясно</option>
+                    <option>Снегопад</option>
+                  </select>
+                  <select class="form-control col-3" v-model="osv">
+                      <option>День</option>
+                      <option>Сумерки</option>
+                      <option>Освещение включено</option>
+                      <option>Освещение не включено</option>
+                      <option>Освещение отсутствует</option>
+                  </select>
+              </div>
+              <a class="btn btn-light col-3" @click="add_point">Добавить точки</a>
+          </div>
+        </div>
+        <div class="col-3">
+          <label for="region" style="color: black; font-weight: 600;">Выберите подгружаемый регион:</label>
+          <select class="form-control" id="region" v-model="region" @change='change_map'>
+              <option selected>Выгрузить Татарстан</option>
+              <option>Выгрузить Санкт-Петербург</option>
+              <option>Выгрузить Москву</option>
+              <option>Выгрузить Волгоградская область</option>
+              <option>Выгрузить Башкирия</option>
+              <option>Выгрузить Марий Эл</option>
+              <option>Выгрузить Омская область</option>
+              <option>Выгрузить Хабаровский край</option>
+              <option>Выгрузить Республика Бурятия</option>
+          </select>
+        </div>
+        <!-- Table -->
+        <a class="btn btn-success" v-if="logged" @click="load_data">Скачать данные</a>
+        <div v-if="logged" class="row justify-content-center">
+          <select class="form-control col-2" v-model="table_type" @change='change_table'>
+            <option value="">Тип ДТП</option>
+            <option>Столкновение</option>
+            <option>Наезд на пешехода</option>
+            <option>Падение пассажира</option>
+            <option>Наезд на препятствие</option>
+            <option>Наезд на велосипедиста</option>
+            <option>Опрокидывание</option>
+            <option>Наезд на стоящее ТС</option>
+            <option>Съезд с дороги</option>
+            <option>Иной вид ДТП</option>
+          </select>
+          <input type="text" class="form-control col-3" placeholder="Причины" v-model="table_reason" @change="change_table">
+          <input type="number" class="form-control col-1" placeholder="Жертвы" v-model="table_pog" @change="change_table">
+          <input type="number" class="form-control col-1" placeholder="Пострадавшие" v-model="table_ran" @change="change_table">
+          <input type="text" class="form-control col-1" placeholder="Время" v-model="table_time" @change="change_table">
+          <select class="form-control col-1" v-model="table_light" @change='change_table'>
+            <option value="">Освещение</option>
+            <option>День</option>
+            <option>Сумерки</option>
+            <option>Освещение включено</option>
+            <option>Освещение не включено</option>
+            <option>Освещение отсутствует</option>
+          </select>
+          <select class="form-control col-1" v-model="table_weather" @change='change_table'>
+            <option value="">Погода</option>
+            <option>Дождь</option>
+            <option>Пасмурно</option>
+            <option>Ясно</option>
+            <option>Снегопад</option>
+          </select>
+        </div>
+        <table v-if="logged" class="container table mt-1" style="max-width: 1600px; background-color: white; border-radius: 40px; border: darkgrey solid 1px; border-radius: 40px;">
+          <thead>
+            <thead class="thead-dark">
+              <tr>
+                <th scope="col">([[ number ]])</th>
+                <th scope="col">Виды ДТП</th>
+                <th scope="col">Причины</th>
+                <th scope="col">Количество погибших</th>
+                <th scope="col">Количество пострадавших</th>
+                <th scope="col">Время</th>
+                <th scope="col">Условия освещения</th>
+                <th scope="col">Погодные условия</th>
+              </tr>
+            </thead>
+            
+            <tr v-for="item in camera_placemarks.features" :class="classObject(item.id)">
+              <th v-for="(key, value) in item.properties" v-if="value != 'hintContent'" scope="col">
+                [[ key ]]
+              </th>
+            </tr>
+          </thead>
+        </table>
+
+  </center>
+
+    <div class="footer-dark" style="padding: 0px 0px;">
+      <footer>
+          <div class="container">
+              <div class="row">
+                  <div class="col-md-12 col-sm-4 item social">
+                      <a href="#"><i class="fab fa-facebook-f"></i></a>
+                      <a href="#"><i class="fab fa-twitter"></i></a>
+                      <a href="https://t.me/lamer_notes"><i class="fab fa-telegram-plane"></i></a>
+                      <a id="inst" href="https://instagram.com/"><i class="fab fa-instagram"></i></a>
+                  </div>
+              </div>
+              <p class="copyright">CVD Team 2020</p>
+          </div>
+      </footer>
+    </div>
+
+  </div>
+
+  <!-- Vue scripts -->
+  <script>
+    Vue.options.delimiters = ['[[', ']]'];
+
+    var app = new Vue({
+        el: '#app',
+
+        vuetify: new Vuetify(),
+
+        data: {
+            logged: '',
+            loaded: false,
+
+            coords : {
+              "SPB": [59.95143215788768,30.23672517719888],
+              "Tat": [55.32665201784719, 50.43419227335783],
+            },
+            cur_coords: [55.32665201784719, 50.43419227335783],
+
+            //  table
+            current_hint: '',
+            number: 0,
+
+            table_type: '',
+            table_reason: '',
+            table_pog: '',
+            table_ran: '',
+            table_time: '',
+            table_light: '',
+            table_weather: '',
+
+
+            // add point
+            display_add_point: false,
+            latitude: '',
+            longitude: '',
+            DTP_V: '',
+            RAN: '',
+            osv: '',
+            s_pog: '',
+
+            // for admin_board
+            display_create_user: false,
+            user_name: '',
+            user_passwd: '',
+            control_passwd: '',
+            valide_password: true,
+            permissons: 'Администратор',
+
+            // for filter params
+            month: 'Сентябрь',
+            time: 1,
+            region: 'Республика Татарстан',
+            weather: 'Пасмурно',
+            light: 'Не указано',
+            type: 'Не указан',
+            affected: 'Не указано',
+            camera_number: '',
+            location: 'Город',
+
+            // for maps
+            placemarks: {},
+            camera_placemarks: {},
+            myMap: '',
+            myMap_camera: '',
+            heatmap: '',
+            objectManager_camera: "",
+        },
+      
+        watch:{
+          region: function(val) {
+            if (val == 'Республика Татарстан') {
+              this.myMap.setCenter(this.coords.Tat, 7);
+              this.myMap_camera.setCenter(this.coords.Tat, 7);
+            }
+            if (val == 'Санкт-Петербург') {
+              this.myMap.setCenter(this.coords.SPB, 10);
+              this.myMap_camera.setCenter(this.coords.SPB, 10);
+            }
+          },
+
+          camera_placemarks: function(val) {
+            this.number = val.features.length
+          },
+
+          current_hint: function(val) {
+            var BreakException = {};
+            if (typeof val === 'number'){
+              try {
+                this.camera_placemarks.features.forEach(element => {
+                    if (element.id == val) {
+                      this.camera_placemarks.features.unshift(element);
+                      throw BreakException;
+                    }
+                });
+              }
+              catch (e) {
+                if (e !== BreakException) throw e;
+              }
+            }
+            else{
+                try {
+                    let last = []
+                    this.camera_placemarks.features.forEach(element => {
+                        if (val.includes(element.id)) {
+                          if(last.includes(element)) {
+                            return true
+                          }
+                          this.camera_placemarks.features.unshift(element);
+                          last.push(element)
+                        }
+                    });
+                  }
+                catch (e) {
+                    if (e !== BreakException) throw e;
+                }
+            }
+          }
+        },
+
+        created: function() {
+          this.logged = window.location.href.split("?")[1].split('=')[1];
+          this.change_map();
+          if(logged) {
+            this.change_camera_map();
+          }
+        },
+
+        methods: {
+          load_data() {
+            let info = []
+            data = this.camera_placemarks.features
+            data.forEach(element => {
+              let counter = 0
+              let params = {
+                name: element.properties.clusterCaption,
+                type: element.properties.balloonContent,
+                reason: element.properties.factor,
+                deaths: element.properties.POG,
+                attached: element.properties.RAN,
+                time: element.properties.Time,
+                light: element.properties.osv,
+                weather: element.properties.s_pog
+              }
+              info.push(params)
+            });
+
+            axios({
+                 method: 'post',
+                 url: "./load", 
+                 data: {
+                  info: info
+                 }
+              });
+          },
+
+          change_table() {
+            let light = this.table_light
+            if (light == 'Освещение включено') {light = 'В темное время суток, освещение включено'}
+            if (light == 'Освещение не включено') {light = 'В темное время суток, не освещение включено'}
+            if (light == 'Освещение отсутствует') {light = 'В темное время суток, освещение отсутсвует'}
+            if (light == 'День') {light = 'Светлое время суток'}
+
+            let filter = {
+              type: this.table_type,
+              reason: this.table_reason,
+              deaths: this.table_pog,
+              attached: this.table_ran,
+              time: this.table_time,
+              light: light,
+              weather: this.table_weather
+            }
+            let seven = []
+            let six = []
+            let five = []
+            let four = []
+            let three = []
+            let two = []
+            let one = []
+            let zero = []
+
+            data = this.camera_placemarks.features
+            data.forEach(element => {
+              let counter = 0
+              let params = {
+                type: element.properties.balloonContent,
+                reason: element.properties.factor,
+                deaths: element.properties.POG,
+                attached: element.properties.RAN,
+                time: element.properties.Time,
+                light: element.properties.osv,
+                weather: element.properties.s_pog
+              }
+
+              if (params.deaths == filter.deaths) {counter++}
+              if (params.attached == filter.attached) {counter++}
+              if (params.type.includes(filter.type)) {counter++}
+              if (params.reason.includes(filter.reason)) {counter++}
+              if (params.light.includes(filter.light)) {counter++}
+              if (params.time.includes(filter.time)) {counter++}
+              if (params.weather.includes(filter.weather)) {counter++}
+
+              if (counter == 0) {zero.push(element)}
+              if (counter == 1) {one.push(element)}
+              if (counter == 2) {two.push(element)}
+              if (counter == 3) {three.push(element)}
+              if (counter == 4) {four.push(element)}
+              if (counter == 5) {five.push(element)}
+              if (counter == 6) {six.push(element)}
+              if (counter == 7) {seven.push(element)}
+            });
+            this.camera_placemarks.features = seven.concat(six, five, four, three, two, one, zero)
+          },
+
+          classObject: function (value) {
+            if (typeof this.current_hint==='number') {
+              return {
+                'text-success': this.current_hint === value
+              }
+            }
+            else {
+              return {
+                'text-success': this.current_hint.includes(value)
+              }
+            }
+          },
+
+          validate() {
+                    if ((this.control_passwd != '')&&(this.control_passwd != this.user_passwd)) {
+                        this.valide_password = false;
+                    }
+                    else {
+                        this.valide_password = true;
+                    }
+                },
+
+          register_user() {
+                    this.validate();
+                    console.log('here');
+                    if (this.valide_password) {
+                        this.display_create_user = false;
+                        axios({
+                            method: 'post',
+                            url: "./create-user", 
+                            data: {
+                                permissons: this.permissons,
+                                username: this.user_name,
+                                password: this.user_passwd
+                            }
+                        });
+                    }
+                },
+
+          add_point() {
+              this.display_add_point = false;
+              axios({
+                 method: 'post',
+                 url: "./map/add-point", 
+                 data: {
+                  latitude: this.latitude,
+                  longitude: this.longitude,
+                  DTP_V: this.DTP_V,
+                  RAN: this.RAN,
+                  osv: this.osv,
+                  s_pog: this.s_pog
+                 }
+                });
+            },
+
+          change_map() {
+              axios({
+                 method: 'post',
+                 url: "./map/change/heatmap", 
+                 data: {
+                    filter_params: {
+                      month: this.month,
+                      time: this.time,
+                      region: this.region,
+                      weather: this.weather,
+                      light: this.light,
+                      type: this.type,
+                      affected: this.affected
+                    },
+                    camera_number: this.camera_number,
+                    location: this.location
+                 }
+                })
+                .then((response) => {
+                    this.placemarks = {
+                      "type": "FeatureCollection",
+                      "features": response.data["placemarks"]
+                    };
+                    this.heatmap.setData(this.placemarks);
+                });
+            },
+
+          change_camera_map() {
+              this.loaded = false;
+              axios({
+                 method: 'post',
+                 url: "./map/change/camera", 
+                 data: {
+                    filter_params: {
+                      month: this.month,
+                      time: this.time,
+                      region: this.region,
+                      weather: this.weather,
+                      light: this.light,
+                      type: this.type,
+                      affected: this.affected
+                    },
+                    camera_number: this.camera_number,
+                    location: this.location
+                 }
+                })
+                .then((response) => {
+                    this.loaded = true;
+                    this.camera_placemarks = {
+                      "type": "FeatureCollection",
+                      "features": response.data["cameras"]
+                    };
+                    this.objectManager_camera.removeAll();
+                    this.objectManager_camera.add(this.camera_placemarks);
+                });
+            }
+        }
+      })
+
+      ymaps.ready(init);
+      function init() {
+          // slider moved
+          $('#ex21').on('change', function (value) {
+            app.time = value.value.newValue;
+            app.change_map();
+          });
+
+          // dtp map
+          app.myMap = new ymaps.Map("map", {
+              center: app.cur_coords,
+              zoom: 7,
+              controls: ['zoomControl'],
+              behaviors: ['drag', 'scrollZoom']
+          }, {
+              searchControlProvider: 'yandex#search'
+          });
+
+          ymaps.modules.require(['Heatmap'], function (Heatmap) {
+            app.heatmap = new Heatmap(app.placemarks);
+            app.heatmap.options.set('gradient', {
+                          '0.1': 'lime',
+                          '0.5': 'yellow',
+                          '0.7': 'orange',
+                          '0.95': 'rgba(242, 41, 27, 0.8)'
+                          });
+            app.heatmap.setMap(app.myMap);
+          });
+          
+          // camera map
+          app.myMap_camera = new ymaps.Map("map2", {
+              center: app.cur_coords,
+              zoom: 7,
+              controls: ['zoomControl'],
+              behaviors: ['drag', 'scrollZoom']
+          }, {
+              searchControlProvider: 'yandex#search'
+          });
+          app.objectManager_camera = new ymaps.ObjectManager({
+              clusterize: true,
+              gridSize: 32,
+              clusterDisableClickZoom: true
+          });
+
+          app.myMap_camera.geoObjects.events.add('click', function (e) {
+            let target = e.get('objectId');
+            app.current_hint = target;
+            if (app.objectManager_camera.clusters.getById(target)) {
+              objects = app.objectManager_camera.clusters.getById(target).properties.geoObjects
+              let buf = []
+              objects.forEach(element => {
+                buf.push(element.id)
+              });
+              app.current_hint = buf
+            }
+          });
+
+          app.objectManager_camera.objects.options.set('preset', 'islands#redDotIcon');
+          app.objectManager_camera.clusters.options.set('preset', 'islands#redClusterIcons');
+          app.myMap_camera.geoObjects.add(app.objectManager_camera);
+          app.objectManager_camera.add(app.camera_placemarks);
+        }         
+  </script>
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-slider/11.0.2/bootstrap-slider.min.js" integrity="sha512-f0VlzJbcEB6KiW8ZVtL+5HWPDyW1+nJEjguZ5IVnSQkvZbwBt2RfCBY0CBO1PsMAqxxrG4Di6TfsCPP3ZRwKpA==" crossorigin="anonymous"></script>
+
+</body>

@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <title>dtp-stat</title>
+    {% load static %}
+
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:400,500,700">
+    <link rel="stylesheet" href="{% static 'statist/fonts/font-awesome.min.css' %}">
+    <link rel="stylesheet" href="{% static 'statist/css/Footer-Dark.css' %}">
+    <link rel="stylesheet" href="{% static 'statist/css/Footer-with-social-media-icons.css' %}">
+
+    <!-- Vue -->
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <!-- semantic UI -->
+    <link rel="stylesheet" type='text/css' href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.14/semantic.min.css">
+    <!--Chart js-->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.min.js" integrity="sha256-Uv9BNBucvCPipKQ2NS9wYpJmi8DTOEfTA/nH2aoJALw=" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.min.css" integrity="sha256-aa0xaJgmK/X74WM224KMQeNQC2xYKwlAt08oZqjeF0E=" crossorigin="anonymous" />
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+</head>
+
+
+<body onload="myFunction1_1();myFunction2_2();myFunction3_3();myFunction4_4()">
+    <div id="app">
+
+        <nav class="navbar navbar-dark navbar-expand-md" 
+            style="
+            background-color: #3E3F3A !important;
+            line-height: 1.4285em;
+            font-family: Lato,'Helvetica Neue',Arial,Helvetica,sans-serif;">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="#" style="font-size: 40px;">
+                    <i class="fas fa-car-crash"></i>
+                    <strong>Safety </strong>Map
+                </a>
+                <button data-toggle="collapse" class="navbar-toggler" data-target="#navcol-1">
+                <span class="sr-only">Toggle navigation</span><span class="navbar-toggler-icon"></span></button>
+                <div
+                    class="collapse navbar-collapse" id="navcol-1">
+                    <ul class="nav navbar-nav ml-auto" style="filter: hue-rotate(0deg) sepia(0%);margin: 100;">
+                        <li class="nav-item" role="presentation"><a class="nav-link" :href="'http://127.0.0.1:8000?logged='+logged" style="font-size: 20px;" v-if='!logged'>Главная страница</a></li>
+                        <li class="nav-item" role="presentation"><a class="nav-link" href="http://127.0.0.1:8000/about_project" style="font-size: 20px;" v-if='!logged'>О проекте</a></li>
+                        <li class="nav-item" role="presentation"><a class="nav-link active" href="#" style="font-size: 20px;">Статистика</a></li>
+                        <li class="nav-item" role="presentation"><a class="nav-link" :href="'http://127.0.0.1:8000/map?logged='+logged" style="font-size: 20px;">Карта</a></li>
+                        <li class="nav-item" role="presentation"><a class="nav-link" href="http://127.0.0.1:8000/about_us" style="font-size: 20px;" v-if='!logged'>О нас</a></li>
+                        <li class="nav-item ml-2" role="presentation" v-if="logged">
+                            <a class="nav-link" @click="logged = false" v-if='logged' style="font-size: 20px;">Выйти</a>
+                        </li>
+                    </ul>
+            </div>
+            </div>
+        </nav>
+
+        <div class="container">
+            <div class="row">
+                <div class="col col-md-6">
+                    <v-statistic id="one" chart='Освещение'></v-statistic>
+                </div>
+                <div class="col col-md-6">
+                    <v-statistic id="two" chart='Катастрофы'></v-statistic>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col col-md-6">
+                    <v-statistic id="three" chart='Виды ДТП'></v-statistic>
+                </div>
+                <div class="col col-md-6">
+                    <v-statistic id="four" chart='ДТП по времени'></v-statistic>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="footer-dark" style="padding: 0px 0px;">
+            <footer>
+                <div class="container">
+                        <div class="col-md-12 col-sm-4 item social">
+                            <a href="#"><i class="fab fa-facebook-f"></i></a>
+                            <a href="#"><i class="fab fa-twitter"></i></a>
+                            <a href="https://t.me/lamer_notes"><i class="fab fa-telegram-plane"></i></a>
+                            <a id="inst" href="https://instagram.com/"><i class="fab fa-instagram"></i></a>
+                        </div>
+                    </div>
+                    <p class="copyright">CVD Team 2020</p>
+            </footer>
+        </div>
+    </div>
+
+    {{ sez_lb|json_script:"sez_lb" }}
+    {{ sez|json_script:"sez" }}
+    {{ katas|json_script:"katas" }}
+    {{ katas_lb|json_script:"katas_lb" }}
+    {{ tim_lb|json_script:"tim_lb" }}
+    {{ tim|json_script:"tim" }}
+    {{ osv|json_script:"osv" }}
+    {{ osv_lb|json_script:"osv_lb" }}
+    {{ dtp|json_script:"dtp" }}
+    {{ dtp_lb|json_script:"dtp_lb" }}
+    {{ pog|json_script:"pog" }}
+    {{ pog_lb|json_script:"pog_lb" }}
+    {{ pch|json_script:"pch" }}
+    {{ pch_lb|json_script:"pch_lb" }}
+    <script>
+    Vue.options.delimiters = ['[[', ']]'];
+
+    var charts_data = {
+        sez_lb: JSON.parse(document.getElementById('sez_lb').textContent),
+        sez: JSON.parse(document.getElementById('sez').textContent),
+        katas: JSON.parse(document.getElementById('katas').textContent),
+        katas_lb: JSON.parse(document.getElementById('katas_lb').textContent),
+        tim: JSON.parse(document.getElementById('tim').textContent),
+        tim_lb: JSON.parse(document.getElementById('tim_lb').textContent),
+        osv: JSON.parse(document.getElementById('osv').textContent),
+        osv_lb: JSON.parse(document.getElementById('osv_lb').textContent),
+        dtp: JSON.parse(document.getElementById('dtp').textContent),
+        dtp_lb: JSON.parse(document.getElementById('dtp_lb').textContent),
+        pog: JSON.parse(document.getElementById('pog').textContent),
+        pog_lb: JSON.parse(document.getElementById('pog_lb').textContent),
+        pch: JSON.parse(document.getElementById('pch').textContent),
+        pch_lb: JSON.parse(document.getElementById('pch_lb').textContent)
+    };
+
+    Vue.component('v-statistic', {
+            template: '\
+                <div>\
+                    <canvas :id="id" width="400" height="400"></canvas>\
+                    <select class="form-control col-4 btn-dark" v-model="cur_chart">\
+                        <option>Освещение</option>\
+                        <option>Катастрофы</option>\
+                        <option>Виды ДТП</option>\
+                        <option>ДТП по времени</option>\
+                        <option>Погода</option>\
+                        <option>Покрытие</option>\
+                        <option>Сезоны</option>\
+                    </select>\
+                </div>\
+            ',
+
+            props: {
+                chart: String,
+                id: String
+            },
+
+            data() {
+                return {
+                    labels: '',
+                    chart_data: '',
+                    chart_type: '',
+                    cur_chart: this.chart
+                }
+            },
+
+            watch: {
+                cur_chart: function(val) {
+                    this.change_chart(val);
+                    this.draw_chart();
+                }
+            },
+
+            methods: {
+                draw_chart() {
+                    var ctx = document.getElementById(this.id).getContext('2d');
+                    var myChart = new Chart(ctx, {
+                        type: this.chart_type,
+                        data: {
+                            labels: this.labels,
+                            datasets: [{
+                                label: this.cur_chart,
+                                data: this.chart_data,
+                                backgroundColor: [
+                                    'rgba(255, 99, 132, 0.2)',
+                                    'rgba(54, 162, 235, 0.2)',
+                                    'rgba(255, 206, 86, 0.2)',
+                                    'rgba(75, 192, 192, 0.2)',
+                                    'rgba(153, 102, 255, 0.2)',
+                                    'rgba(255, 159, 64, 0.2)',
+                                    'rgba(255, 99, 132, 0.2)',
+                                    'rgba(54, 162, 235, 0.2)',
+                                    'rgba(255, 206, 86, 0.2)',
+                                    'rgba(75, 192, 192, 0.2)'
+                                ],
+                                borderColor: [
+                                    'rgba(255, 99, 132, 1)',
+                                    'rgba(54, 162, 235, 1)',
+                                    'rgba(255, 206, 86, 1)',
+                                    'rgba(75, 192, 192, 1)',
+                                    'rgba(153, 102, 255, 1)',
+                                    'rgba(255, 159, 64, 1)',
+                                    'rgba(255, 99, 132, 1)',
+                                    'rgba(54, 162, 235, 1)',
+                                    'rgba(255, 206, 86, 1)',
+                                    'rgba(75, 192, 192, 1)'
+                                ],
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            scales: {
+                                yAxes: [{
+                                    ticks: {
+                                        beginAtZero: true
+                                    }
+                                }]
+                            }
+                        }
+                    });
+                },
+
+                change_chart(value) {
+                    if (value === 'Сезоны') {
+                        this.labels = charts_data.sez_lb; 
+                        this.chart_data = charts_data.sez;
+                        this.chart_type = 'line';
+                    }
+                    if (value === 'Покрытие') {
+                        this.labels = charts_data.pch_lb; 
+                        this.chart_data = charts_data.pch;
+                        this.chart_type = 'pie';
+                    }
+                    if (value === 'Погода') {
+                        this.labels = charts_data.pog_lb; 
+                        this.chart_data = charts_data.pog;
+                        this.chart_type = 'pie';
+                    }
+                    if (value === 'ДТП по времени') {
+                        this.labels = charts_data.tim_lb; 
+                        this.chart_data = charts_data.tim;
+                        this.chart_type = 'line';
+                    }
+                    if (value === 'Виды ДТП') {
+                        this.labels = charts_data.dtp_lb; 
+                        this.chart_data = charts_data.dtp;
+                        this.chart_type = 'bar';
+                    }
+                    if (value === 'Катастрофы') {
+                        this.labels = charts_data.katas_lb; 
+                        this.chart_data = charts_data.katas;
+                        this.chart_type = 'bar';
+                    }
+                    if (value === 'Освещение') {
+                        this.labels = charts_data.osv_lb; 
+                        this.chart_data = charts_data.osv;
+                        this.chart_type = 'bar';
+                    }
+                }
+            },
+
+            mounted: function() {
+                this.change_chart(this.chart);
+                this.draw_chart();
+            }
+        });
+
+    var app = new Vue({
+        el: '#app',
+
+        data: {
+            logged: '',
+        },
+
+        created: function() {
+            this.logged = window.location.href.split("?")[1].split('=')[1];
+        }
+    })
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.x/dist/vue.js"></script>
+    <script src="{% static 'statist/js/jquery.min.js' %}"></script>
+    <script src="{% static 'statist/bootstrap/js/bootstrap.min.js' %}"></script>
+</body>
+</html>
