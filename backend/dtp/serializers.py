@@ -7,3 +7,9 @@ class DtpSerializer(serializers.ModelSerializer):
     class Meta:
         model = Dtp
         fields = '__all__'
+
+
+class DtpCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Dtp
+        fields = ['lat', 'long']

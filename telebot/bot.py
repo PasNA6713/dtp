@@ -49,7 +49,11 @@ def catch_user(func):
 def location_processing(message, user):
     ''' Принимаем геолокацию '''
     location = message.location
-    # bot.reply_to(message, 'Ваше заявление принято, оператор свяжется с вами в ближайшее время')
+    requests.post(f'{BACKEND}dtp/create/', data={
+        'lat': location.latitude,
+        'long': location.longitude,
+    })
+    bot.reply_to(message, 'Сообщение о ДТП принято! Спасибо за вашу сознательность!')
     
 
 @bot.message_handler(content_types=['venue'])
@@ -61,26 +65,10 @@ def venue_processing(message, user):
     address = place.address
     location = place.location
     title = place.title
-    # bot.reply_to(message, 'Ваше заявление принято, оператор свяжется с вами в ближайшее время')
-
-
-@bot.message_handler(content_types=['voice'])
-@catch_backend_off
-@catch_user
-def voice_processing(message, user):
-    ''' Принимаем голосовуху '''
-    file_info = bot.get_file(message.voice.file_id)
-    to_send = bot.download_file(file_info.file_path)
-    requests.post(
-        f'{BACKEND}create/voice/',
-        files={
-            'file': to_send
-        },
-        data={
-            'filename': 'message.ogg'
-        }
-    )
-    bot.reply_to(message, 'Ваше заявление принято, оператор свяжется с вами в ближайшее время')
-
+    requests.post(f'{BACKEND}dtp/create/', data={
+        'lat': location.latitude,
+        'long': location.longitude,
+    })
+    bot.reply_to(message, 'Сообщение о ДТП принято! Спасибо за вашу сознательность!')
 
 bot.polling()
