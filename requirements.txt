@@ -23,13 +23,16 @@ itypes==1.2.0
 Jinja2==2.11.2
 loguru==0.5.3
 MarkupSafe==1.1.1
+numpy==1.20.1
 oauthlib==3.1.0
 packaging==20.4
+pandas==1.2.2
 psycopg2==2.8.6
 pycparser==2.20
 PyJWT==1.7.1
 pyparsing==2.4.7
 pyTelegramBotAPI==3.7.3
+python-dateutil==2.8.1
 python-dotenv==0.15.0
 python3-openid==3.2.0
 pytz==2020.4

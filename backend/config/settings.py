@@ -32,7 +32,9 @@ INSTALLED_APPS = [
     'drf_yasg',
     'drfauto',
 
-    'dtp'
+    'dtp',
+    'clasterization',
+    'file_worker'
 ]
 
 REST_FRAMEWORK = {

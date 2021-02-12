@@ -6,7 +6,7 @@ from rest_framework.response import Response
 from .models import Dtp
 from .serializers import DtpDetailSerializer, DtpCreateSerializer, DtpPointSerializer
 from .filters import DtpFilter
-from .services import fill_db_from_json, get_dtps_by_ids
+from .services import get_dtps_by_ids
 from . import params
 
 
@@ -35,12 +35,6 @@ class GetFilterParams(APIView):
             'categories': params.CATEGORIES
         })
 
-class UploadFileView(APIView):
-    def post(self, request, format=None):
-        file = request.FILES['file']
-        fill_db_from_json(file)
-        return Response(status=status.HTTP_200_OK)
-
 
 class DtpCreateView(generics.CreateAPIView):
     serializer_class = DtpCreateSerializer
@@ -61,3 +55,4 @@ class DtpListView(generics.ListAPIView):
     serializer_class = DtpPointSerializer
     filter_backends = (DjangoFilterBackend,)
     filterset_class = DtpFilter
+
