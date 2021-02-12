@@ -6,8 +6,22 @@ from rest_framework.response import Response
 from .models import Dtp
 from .serializers import DtpDetailSerializer, DtpCreateSerializer, DtpPointSerializer
 from .filters import DtpFilter
-from .services import fill_db_from_json
+from .services import fill_db_from_json, get_dtps_by_ids
 from . import params
+
+
+class GetSomeDtps(APIView):
+    def post(self, request, format=None):
+        ids = request.data.get('ids')
+        if ids is None: return Response(
+            {"Detail": "Field 'ids' is required"},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+        data = DtpDetailSerializer(get_dtps_by_ids(ids), many=True).data
+        return Response(
+            data,
+            status=status.HTTP_200_OK
+        )
 
 
 class GetFilterParams(APIView):
@@ -20,7 +34,6 @@ class GetFilterParams(APIView):
             'regions': params.REGIONS,
             'categories': params.CATEGORIES
         })
-
 
 class UploadFileView(APIView):
     def post(self, request, format=None):

@@ -1,5 +1,6 @@
 import json
 
+from django.db.models import Q
 from loguru import logger
 
 from .models import Dtp
@@ -20,3 +21,11 @@ def fill_db_from_json(file):
             road_conditions=dtp['road_conditions']))
         logger.info(f'{dtps[-1]} - Created!')
     Dtp.objects.bulk_create(dtps)
+
+
+@logger.catch
+def get_dtps_by_ids(ids: list):
+    q = Q()
+    for i in ids:
+        q |= Q(pk=i)
+    return Dtp.objects.filter(q)
