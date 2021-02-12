@@ -4,7 +4,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 
 from .models import Dtp
-from .serializers import DtpSerializer, DtpCreateSerializer
+from .serializers import DtpDetailSerializer, DtpCreateSerializer, DtpPointSerializer
 from .filters import DtpFilter
 from .services import fill_db_from_json
 from . import params
@@ -35,16 +35,16 @@ class DtpCreateView(generics.CreateAPIView):
 
 class DtpDestroyView(generics.DestroyAPIView):
     queryset = Dtp.objects.all()
-    serializer_class = DtpSerializer
+    serializer_class = DtpPointSerializer
 
 
 class DtpRetrieveView(generics.RetrieveAPIView):
     queryset = Dtp.objects.all()
-    serializer_class = DtpSerializer
+    serializer_class = DtpDetailSerializer
 
 
 class DtpListView(generics.ListAPIView):
     queryset = Dtp.objects.all()
-    serializer_class = DtpSerializer
+    serializer_class = DtpPointSerializer
     filter_backends = (DjangoFilterBackend,)
     filterset_class = DtpFilter

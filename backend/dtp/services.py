@@ -18,4 +18,5 @@ def fill_db_from_json(file):
             category=dtp['category'], deaths =dtp['dead_count'], injured=dtp['injured_count'],
             light=dtp['light'], weather=dtp['weather'], nearby=dtp['nearby'],
             road_conditions=dtp['road_conditions']))
+        logger.info(f'{dtps[-1]} - Created!')
     Dtp.objects.bulk_create(dtps)
