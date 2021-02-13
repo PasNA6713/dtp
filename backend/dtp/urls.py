@@ -10,6 +10,6 @@ urlpatterns = [
     path("some/", views.GetSomeDtps.as_view()),
     path("list/", views.DtpListView.as_view()),
    
-
+    path('plot/<str:column>/', views.GetPlotView.as_view()),
     path('get-filter-params/', views.GetFilterParams.as_view()),
 ]

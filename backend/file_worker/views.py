@@ -1,3 +1,5 @@
+import json
+
 from rest_framework.views import APIView
 from rest_framework import status
 from rest_framework.response import Response
@@ -5,8 +7,6 @@ from rest_framework.response import Response
 from .services import get_file
 from dtp.services import fill_db_from_json
 
-
-FILES = dict()
 
 class UploadFileView(APIView):
     def post(self, request, format=None):
@@ -25,14 +25,23 @@ class CreateFileView(APIView):
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )
-        if FILES:
-            key = list(FILES.keys())[-1]+1
+        with open('files.json', 'r') as json_file:
+            files = json.load(json_file)
+        if files:
+            key = int(list(files.keys())[-1]) + 1
         else:
             key = 1
-        FILES[key] = params
+        files[key] = params
+        with open('files.json', 'w') as outfile:
+            json.dump(files, outfile)
         return Response(key, status=200)
 
 
 class DownloadFileView(APIView):
     def get(self, request, key, file_format):
-        return get_file(file_format, FILES.pop(key))
+        with open('files.json') as json_file:
+            files = json.load(json_file)
+        file_info = files.pop(str(key))
+        with open('files.json', 'w') as outfile:
+            json.dump(files, outfile)
+        return get_file(file_format, file_info)
