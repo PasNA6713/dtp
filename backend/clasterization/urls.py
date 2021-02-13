@@ -4,5 +4,5 @@ from . import views
 
 
 urlpatterns = [
-    path('', views.GetClastersView.as_view()),
+    path('<int:number>/', views.GetClastersView.as_view()),
 ]

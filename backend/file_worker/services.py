@@ -12,9 +12,9 @@ from dtp.services import construct_data, get_model_fields
 def construct_dataframe(params) -> pd.DataFrame:
     data = construct_data(params)
     d = []
-    for claster, info in data.items():
-        for point in info.get('points'):
-            string = list(point.values())[1:] + [claster, info.get('lat'), info.get('long')]
+    for claster in range(len(data)):
+        for point in data[claster].get('points'):
+            string = list(point.values())[1:] + [claster, data[claster].get('lat'), data[claster].get('long')]
             d.append(string)
     col = get_model_fields()
     return pd.DataFrame(data=d, columns=col)

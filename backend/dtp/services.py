@@ -33,7 +33,7 @@ def fill_db_from_json(file):
     Dtp.objects.bulk_create(dtps)
 
 def construct_data(params) -> list:
-    for i in params.values():
+    for i in params:
         i['points'] = [dict(i) for i in DtpDetailSerializer(get_dtps_by_ids(i['points']), many=True).data]
     return params
 

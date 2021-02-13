@@ -21,7 +21,6 @@ class CreateFileView(APIView):
         if params is None: 
             return Response(
                 {
-                    "format": "Field is required",
                     "params": "Field is required",
                 },
                 status=status.HTTP_400_BAD_REQUEST
