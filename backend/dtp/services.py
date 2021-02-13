@@ -33,9 +33,14 @@ def fill_db_from_json(file):
     Dtp.objects.bulk_create(dtps)
 
 def construct_data(params) -> list:
-    for i in params:
-        i['points'] = [dict(i) for i in DtpDetailSerializer(get_dtps_by_ids(i['points']), many=True).data]
-    return params
+    params = list(params)
+    new_params = []
+    for claster in params:
+        claster = dict(claster)
+        detail_point =  DtpDetailSerializer(get_dtps_by_ids(claster.pop('points')), many=True).data
+        claster['points'] = [dict(i) for i in detail_point]
+        new_params.append(claster)
+    return new_params
 
 def get_model_fields() -> list:
     return [i.name for i in Dtp._meta.fields][1:] + ['claster', 'claster_lat', 'claster_long']
