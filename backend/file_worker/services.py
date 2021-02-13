@@ -9,7 +9,7 @@ import pandas as pd
 from dtp.services import construct_data, get_model_fields
 
 
-def construct_dataframe(params) -> pd.DataFrame:
+def construct_dataframe(params: list) -> pd.DataFrame:
     data = construct_data(params)
     d = []
     for claster in range(len(data)):
@@ -19,20 +19,20 @@ def construct_dataframe(params) -> pd.DataFrame:
     col = get_model_fields()
     return pd.DataFrame(data=d, columns=col)
 
-def create_json_file(filename: str, params: dict) -> None:
+def create_json_file(filename: str, params: list) -> None:
     with open(filename, 'w') as outfile:
         json.dump({
             'clasters': construct_data(params)
         }, outfile, indent=4, ensure_ascii=False)
 
-def create_csv_file(filename: str, params: dict) -> None:
+def create_csv_file(filename: str, params: list) -> None:
     construct_dataframe(params).to_csv(filename, encoding='cp1251')
 
-def create_xlsx_file(filename: str, params: dict) -> None:
+def create_xlsx_file(filename: str, params: list) -> None:
     construct_dataframe(params).to_excel(filename)
 
 
-def get_file(file_format: str, params: dict) -> HttpResponse:
+def get_file(file_format: str, params: list) -> HttpResponse:
     filename = f'data.{file_format}'
     
     if file_format == 'json':

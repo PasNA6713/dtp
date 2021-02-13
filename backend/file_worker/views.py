@@ -17,7 +17,7 @@ class UploadFileView(APIView):
 
 class CreateFileView(APIView):
     def post(self, request):
-        params = request.data.get('params')
+        params = request.data
         if params is None: 
             return Response(
                 {
