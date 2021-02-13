@@ -1,9 +1,11 @@
+from datetime import datetime
+
 from django.db import models
 from django.contrib.postgres.fields import ArrayField
 
 
 class Dtp(models.Model):
-    datetime = models.DateTimeField('datetim', auto_now=True)
+    datetime = models.DateTimeField('datetime', default=datetime.now())
 
     parent_region = models.CharField('parent_region', max_length=150)
     region = models.CharField('region', max_length=150)
