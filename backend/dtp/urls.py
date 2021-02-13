@@ -9,6 +9,7 @@ urlpatterns = [
     path("retrieve/<int:pk>/", views.DtpRetrieveView.as_view()),
     path("some/", views.GetSomeDtps.as_view()),
     path("list/", views.DtpListView.as_view()),
+    path('range/',views.GetRangeDtps.as_view()),
    
     path('plot/<str:column>/', views.GetPlotView.as_view()),
     path('get-filter-params/', views.GetFilterParams.as_view()),

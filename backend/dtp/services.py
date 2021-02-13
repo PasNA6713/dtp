@@ -1,4 +1,5 @@
 import json
+from math import sqrt
 
 from django.db.models import Q
 
@@ -44,3 +45,7 @@ def construct_data(params) -> list:
 
 def get_model_fields() -> list:
     return [i.name for i in Dtp._meta.fields][1:] + ['claster', 'claster_lat', 'claster_long']
+
+
+def filter_range(base_point, second_point, min_range: float) -> bool:
+    return sqrt((base_point['lat']-second_point['lat'])**2 + (base_point['long']-second_point['long'])**2) < min_range

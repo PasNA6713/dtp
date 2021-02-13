@@ -8,7 +8,7 @@ from rest_framework.response import Response
 from .models import Dtp
 from .serializers import DtpDetailSerializer, DtpCreateSerializer, DtpPointSerializer
 from .filters import DtpFilter
-from .services import get_dtps_by_ids
+from .services import get_dtps_by_ids, filter_range
 from . import params
 
 
@@ -76,6 +76,23 @@ class GetFilterParams(APIView):
             'weather': params.WEATHER,
             'nearby': params.NEARBY,
             'road_conditions': params.ROAD_CONDITIONS,
-            'regions': params.REGIONS,
-            'categories': params.CATEGORIES
+            'region': params.REGION,
+            'category': params.CATEGORY
         })
+
+
+class GetRangeDtps(generics.ListCreateAPIView):
+    queryset = Dtp.objects.all()
+    serializer_class = DtpPointSerializer
+    filter_backends = (DjangoFilterBackend,)
+    filterset_class = DtpFilter
+
+    def post(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        all_points = [dict(i) for i in self.get_serializer(queryset, many=True).data]
+        cur_point = {
+            'lat': float(request.data.get('lat')),
+            'long': float(request.data.get('long'))
+        }
+        data = filter(lambda x: filter_range(cur_point, x, 0.01), all_points)
+        return Response(data, status=200)
