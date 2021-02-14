@@ -1,5 +1,7 @@
 from django.contrib import admin
 from django.urls import path, include
+from django.conf.urls.static import static
+from django.conf import settings
 
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
@@ -25,7 +27,9 @@ schema_view = get_schema_view(
 )
 
 urlpatterns = [
-   path('', include('dtp.urls')),
+   path('dtp/', include('dtp.urls')),
+   path('file/', include('file_worker.urls')),
+   path('claster/', include('clasterization.urls')),
 
    path('admin/', admin.site.urls),
    path('api/', include('rest_framework.urls')),
@@ -41,4 +45,4 @@ urlpatterns = [
    path('swagger(?<format>\.json|\.yaml)', schema_view.without_ui(cache_timeout=0)),
    path('swagger/', schema_view.with_ui('swagger', cache_timeout=0)),
    path('redoc/', schema_view.with_ui('redoc', cache_timeout=0)),
-]
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

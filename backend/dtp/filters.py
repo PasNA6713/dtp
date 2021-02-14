@@ -5,7 +5,11 @@ from .models import Dtp
 
 
 def get_time_group(queryset, name, number):
-    if number==0:
+    if number==3:
+        start_time = 21
+        end_time = 2
+        return queryset.filter(Q(datetime__hour__gte=start_time) | Q(datetime__hour__lt=end_time))
+    elif number==0:
         start_time = 2
         end_time = 11
     elif number==1:
@@ -14,10 +18,7 @@ def get_time_group(queryset, name, number):
     elif number==2:
         start_time = 16
         end_time = 21
-    elif number==3:
-        start_time = 21
-        end_time = 2
-    return queryset.filter(Q(datetime__hour__gte=start_time) | Q(datetime__hour__lt=end_time))
+    return queryset.filter(Q(datetime__hour__gte=start_time) & Q(datetime__hour__lt=end_time))
 
 
 class DtpFilter(filters.FilterSet):
