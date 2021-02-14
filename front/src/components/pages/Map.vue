@@ -1,0 +1,631 @@
+<template>
+  <div>
+    <br>
+    <v-container style="width: 1000px;" v-bind:class="{ isBigger: isAllDays }">
+      <v-card>
+        <v-row>
+          <!-- Select Regions -->
+          <v-col cols="6">
+            <label for="region_filter">Регион:</label>
+            <v-select
+            id="region_filter"
+            :items="regions"
+            v-model="filterParams.region"
+            :value="filterParams.region"
+            placeholder="Пушкинский район"
+            @change="changeMap"
+          ></v-select>
+          </v-col>
+
+          <!-- Select Road Conditions -->
+          <v-col cols="6">
+            <label for="road_conditions_filter">Дорожные условия:</label>
+            <v-select
+            id="road_conditions_filter"
+            :items="roadCondition"
+            v-model="filterParams.roadCondition"
+            :value="filterParams.roadCondition"
+            placeholder="Отсутствие, плохая различимость горизонтальной разметки проезжей части"
+            @change="changeMap"
+          ></v-select>
+          </v-col>
+        </v-row>
+
+        <v-row>
+          <!-- Select Light -->
+          <v-col cols="6">
+            <label for="light_filter">Освещение</label>
+            <v-select
+            id="light_filter"
+            :items="light"
+            v-model="filterParams.light"
+            @change="changeMap"
+          ></v-select>
+          </v-col>
+
+          <!-- Select Weather -->
+          <v-col cols="6">
+            <label for="weather_filter">Погода</label>
+            <v-select
+            id="weather_filter"
+            :items="weather"
+            v-model="filterParams.weather"
+            :value="filterParams.weather"
+            @change="changeMap"
+            placeholder="Снегопад"
+          ></v-select>
+          </v-col>
+        </v-row>
+
+        <v-row>
+          <!-- Select DTP's Category -->
+          <v-col cols="6">
+            <label for="category_filter">Тип ДТП:</label>
+            <v-select
+            id="category_filter"
+            :items="category"
+            v-model="filterParams.category"
+            @change="changeMap"
+          ></v-select>
+          </v-col>
+
+        <!-- Select location -->
+          <v-col cols="6">
+            <label for="location_filter">Место происшествия</label>
+            <v-select
+            id="location_filter"
+            :items="location"
+            v-model="filterParams.location"
+            @change="changeMap"
+          ></v-select>
+          </v-col>
+        </v-row>
+
+        <v-row v-if="logged">
+          <!-- Input quontity of pattrols -->
+            <v-text-field 
+            label="Рассчитать количество камер"
+            v-model="quontityPatrolls"
+            :rules="rules"
+            ></v-text-field>
+        </v-row>
+
+        <v-row v-if="logged">
+            <v-btn
+            elevation="2"
+            width="900px"
+            @click="changeCameraMap"
+          >Рассчитать положение камер</v-btn>
+        </v-row>
+
+        <v-row>
+          <!-- Scroll time -->
+          <v-slider
+          :tick-labels="sliderTicks"
+          :max="4"
+          step="1"
+          ticks="always"
+          tick-size="3"
+          v-model="filterParams.time"
+          ></v-slider>
+        </v-row>
+
+        <!-- Select Day -->
+        <v-row justify="center">
+          <v-checkbox
+            v-model="isAllDays"
+            label="Все дни"
+          ></v-checkbox>
+          <v-date-picker
+          v-if="!isAllDays"
+          width="900px"
+          :no-title="true"
+          :show-current="false"
+          v-model="filterParams.date"
+          @change="changeMap"
+          ></v-date-picker>
+        </v-row>
+      </v-card>
+    </v-container>
+
+      <v-spacer></v-spacer>
+      <v-row>
+        <v-col>
+          <yandex-map  id="map"
+              :settings="settings"
+              :coords="mapCenter"
+              :zoom="7" 
+              :use-object-manager="true"
+              :controls="['zoomControl']"
+              @map-was-initialized="getMapInstance"
+          >
+          </yandex-map>
+        </v-col>
+
+        <v-col v-if="logged">
+          <yandex-map  id="map2"
+              :settings="settings"
+              :coords="mapCenter"
+              :zoom="7" 
+              :use-object-manager="true"
+              :controls="['zoomControl']"
+              @map-was-initialized="getMapInstance2"
+          >
+          </yandex-map>
+        </v-col>
+      </v-row>
+      <br>
+  </div>
+</template>
+
+<script>
+  import { yandexMap, ymapMarker } from 'vue-yandex-maps'
+  export default {
+
+    components: {
+      yandexMap, 
+      ymapMarker,
+    },
+
+    data: () => ({
+      logged: false,
+
+      //for init of maps
+      settings: {
+          apiKey: 'e70694c3-ce7f-4459-b7f6-be3d53e2cc8e',
+          lang: 'ru_RU',
+          coordorder: 'latlong',
+          version: '2.1',
+      },
+
+      mapCenter: [59.9370, 30.3089],
+      isShow: false,
+      filter: [],
+      currentMap: null,
+      objectManager: null,
+      accidentPoints: [],
+
+      //for init of second map
+      currentMap2: null,
+      objectManager2: null,
+      accidentPoints2: [],
+      accidentInfo: [],
+
+      //for map's filter
+      isAllDays: true, 
+      regions: [
+        "Курортный район",
+        "Кировский район",
+        "Пушкинский район",
+        "Московский район",
+        "Фрунзенский район",
+        "Петроградский район",
+        "Калининский район",
+        "Приморский район",
+        "Василеостровский район",
+        "Адмиралтейский район",
+        "Красногвардейский район",
+        "Петродворцовый район",
+        "Колпинский район",
+        "Невский район",
+        "Кронштадтский район",
+        "Центральный район",
+        "Выборгский район",
+        "Красносельский район"
+        ],
+      roadCondition: [
+        "Отсутствие, плохая различимость горизонтальной разметки проезжей части",
+        "Сухое",
+        "Низкие сцепные качества покрытия",
+        "Неправильное применение, плохая видимость дорожных знаков",
+        "Неровное покрытие",
+        "Нарушения в размещении наружной рекламы",
+        "Отсутствие направляющих устройств и световозвращающих элементов на них",
+        "Загрязненное",
+        "Несоответствие дорожных ограждений предъявляемым требованиям",
+        "Отсутствие, плохая различимость вертикальной разметки",
+        "Плохая видимость светофора",
+        "Неисправность светофора",
+        "Неудовлетворительное состояние разделительной полосы",
+        "Неисправное освещение",
+        "Ограничение видимости",
+        "Мокрое",
+        "Заснеженное",
+        "Гололедица",
+        "Отсутствие освещения",
+        "Отсутствие временных ТСОД в местах проведения работ",
+        "Отсутствие тротуаров (пешеходных дорожек)",
+        "Пыльное",
+        "Отклонение верха головки рельса трамвайных (железнодорожных) путей, расположенных в пределах проезжей части, относительно покрытия, более чем на 2,0 см",
+        "Обработанное противогололедными материалами",
+        "Со снежным накатом",
+        "Свежеуложенная поверхностная обработка",
+        "Отсутствие пешеходных ограждений в необходимых местах",
+        "Не установлено",
+        "Отсутствие дорожных ограждений в необходимых местах",
+        "Дефекты покрытия",
+        "Недостаточное освещение",
+        "Сужение проезжей части, наличие препятствий, затрудняющих движение транспортных средств",
+        "Несоответствие люков смотровых колодцев и ливневой канализации предъявляемым требованиям",
+        "Отсутствие дорожных знаков в необходимых местах",
+        "Залитое (покрытое) водой",
+        "Несоответствие железнодорожного переезда предъявляемым требованиям",
+        "Недостатки зимнего содержания",
+        "Отсутствие элементов обустройства остановочного пункта общественного пассажирского транспорта",
+        "Плохая видимость световозвращателей, размещенных на дорожных ограждениях",
+        "Неудовлетворительное состояние обочин"
+        ],
+      light: [
+        "Светлое время суток",
+        "Сумерки",
+        "В темное время суток, освещение не включено",
+        "В темное время суток, освещение включено",
+        "В темное время суток, освещение отсутствует",
+        "Не установлено"
+      ],
+      weather: [
+        "Снегопад",
+        "Ясно",
+        "Метель",
+        "Ураганный ветер",
+        "Пасмурно",
+        "Туман",
+        "Дождь"
+      ],
+      category: [
+        "Падение пассажира",
+        "Наезд на пешехода",
+        "Столкновение",
+        "Иной вид ДТП",
+        "Наезд на препятствие",
+        "Съезд с дороги",
+        "Опрокидывание",
+        "Наезд на внезапно возникшее препятствие",
+        "Падение груза",
+        "Наезд на стоящее ТС",
+        "Наезд на лицо, не являющееся участником дорожного движения, осуществляющее производство работ",
+        "Наезд на велосипедиста",
+        "Наезд на лицо, не являющееся участником дорожного движения, осуществляющее несение службы",
+        "Наезд на животное",
+        "Наезд на лицо, не являющееся участником дорожного движения, осуществляющее какую-либо другую деятельность",
+        "Отбрасывание предмета"
+      ],
+      location: [
+         "Остановка трамвая",
+        "Надземный пешеходный переход",
+        "Территориальное подразделение МВД России (либо его структурное подразделение)",
+        "Нерегулируемый перекрёсток неравнозначных улиц (дорог)",
+        "Нерегулируемый пешеходный переход, расположенный на участке улицы или дороги, проходящей вдоль территории школы или иного детского учреждения",
+        "Остановка общественного транспорта",
+        "Регулируемый пешеходный переход",
+        "Эстакада, путепровод",
+        "Автовокзал (автостанция)",
+        "Зоны отдыха",
+        "Крупный торговый объект (являющийся объектом массового тяготения пешеходов и (или) транспорта)",
+        "Спортивные и развлекательные объекты",
+        "Объект (здание, сооружение) религиозного культа",
+        "Школа либо иная детская (в т.ч. дошкольная) организация",
+        "Объект торговли, общественного питания на автодороге вне НП",
+        "Выезд с прилегающей территории",
+        "Иное образовательное учреждение",
+        "Жилые дома индивидуальной застройки",
+        "Подземный пешеходный переход",
+        "Внутридворовая территория",
+        "Объект строительства",
+        "Иная образовательная организация",
+        "СП ДПС (КПМ)",
+        "Регулируемый пешеходный переход, расположенный на участке улицы или дороги, проходящей вдоль территории школы или иной детской организации",
+        "Пешеходная зона",
+        "Школа либо иное детское (в т.ч. дошкольное) учреждение",
+        "Регулируемый перекрёсток",
+        "Регулируемый пешеходный переход, расположенный на участке улицы или дороги, проходящей вдоль территории школы или иного детского учреждения",
+        "Автостоянка (не отделённая от проезжей части)",
+        "Одиночный торговый объект, являющийся местом притяжения транспорта и (или) пешеходов",
+        "Иной объект",
+        "Нерегулируемый перекрёсток",
+        "Тротуар, пешеходная дорожка",
+        "Нерегулируемый пешеходный переход",
+        "Подход к мосту, эстакаде, путепроводу",
+        "Регулируемый перекресток",
+        "Административные здания",
+        "Автостоянка (отделенная от проезжей части)",
+        "Тоннель",
+        "Кладбище",
+        "Нерегулируемый пешеходный переход, расположенный на участке улицы или дороги, проходящей вдоль территории школы или иной детской организации",
+        "Медицинские (лечебные) организации",
+        "Аэропорт, ж/д вокзал (ж/д станция), речной или морской порт (пристань)",
+        "Регулируемый ж/д переезд с дежурным",
+        "Нерегулируемое пересечение с круговым движением",
+        "Остановка маршрутного такси",
+        "Лечебные учреждения",
+        "Производственное предприятие",
+        "Многоквартирные жилые дома",
+        "АЗС",
+        "Мост, эстакада, путепровод",
+        "Нерегулируемый перекрёсток равнозначных улиц (дорог)",
+        "Мост",
+        "Регулируемый ж/д переезд без дежурного",
+        "Нерегулируемый ж/д переезд"
+      ],
+      sliderTicks: [
+        "Все время",
+        "2.00 - 11.00", "11.00 - 16.00", 
+        "16.00 - 21.00", "21.00 - 2.00"
+      ],
+
+      // for an authorized person
+      rules: [
+        value => (Number.isInteger(parseInt(value, 10))) || 'Введите целое число',
+      ],
+      quontityPatrolls: null,
+
+      //Selected by any user
+      filterParams: {
+        roadCondition: "Отсутствие, плохая различимость горизонтальной разметки проезжей части",
+        time: null,
+        date: new Date().toISOString().substr(0, 10),
+        region: "Пушкинский район",
+        weather: "Снегопад",
+        light: null,
+        category: null,
+        camera_number: null,
+        location: null
+      }
+    }),
+
+    methods: {
+        onClick(e) {
+          console.log("pressed!")
+            // this.accidentPoints = []
+            // let target = e.get('objectId');
+            // if (this.objectManager.clusters.getById(target)) {
+            //     let objects = this.objectManager.clusters.getById(target).properties.geoObjects
+            //     objects.forEach(element => {
+            //         axios({
+            //             method: 'GET',
+            //             url: `${this.$store.state.backendUrl}/dtp/${element.id}/`
+            //         }).then(response => {
+            //             this.accidentInfo.push(response.data)
+            //         })
+            //     });
+            // }
+            // else {
+            //     axios({
+            //             method: 'GET',
+            //             url: `${this.$store.state.backendUrl}${target}/`
+            //         }).then(response => {
+            //             this.push(response.data)
+            //         })
+            // }
+        },
+
+        async getMapInstance(map) {
+          if(map) {
+            axios.get(`${this.$store.state.backendUrl}/dtp/list/?weather=Снегопад&regions=Пушкинский район&road_conditions=Отсутствие, плохая различимость горизонтальной разметки проезжей части`
+            ).then(response => {
+                for (let i=0;i<response.data.length;i++){
+                  let mapMarker = {
+                    type: 'Feature',
+                    id: response.data[i]["id"],
+                    geometry: {
+                        type: 'Point',
+                        coordinates: [response.data[i]["lat"], response.data[i]["long"]]
+                    }
+                  }
+                  this.accidentPoints.push(mapMarker)
+                }
+                  try {
+                    this.currentMap = map
+                    this.objectManager = new ymaps.ObjectManager({
+                        clusterize: true,
+                        gridSize: 32,
+                        clusterDisableClickZoom: true
+                    })
+                    try {
+                        this.objectManager.add(this.accidentPoints)
+                        this.currentMap.geoObjects.add(this.objectManager)
+                        this.currentMap.geoObjects.events.add('click', this.onClick)
+                    } catch (error) {
+                        console.log('no points!')
+                      }
+                  } catch (error) {
+                  console.log(error)
+                  }
+              })
+          }
+        },
+
+        async getMapInstance2(map2) {
+          if(map2) {
+            axios.get(`${this.$store.state.backendUrl}/dtp/list/?weather=Снегопад&regions=Пушкинский район&road_conditions=Отсутствие, плохая различимость горизонтальной разметки проезжей части`
+            ).then(response => {
+                let mapmarker = {
+                  type: 'Feature',
+                  id: response.data[0]["id"],
+                  geometry: {
+                      type: 'Point',
+                      coordinates: [response.data[0]["lat"], response.data[0]["long"]]
+                  }
+                }
+                  this.accidentPoints2.push(mapmarker)
+
+                  try {
+                    this.currentMap2 = map2
+                    this.objectManager2 = new ymaps.ObjectManager({
+                        clusterize: true,
+                        gridSize: 32,
+                        clusterDisableClickZoom: true
+                    })
+                    try {
+                        this.objectManager2.add(this.accidentPoints2)
+                        this.currentMap2.geoObjects.add(this.objectManager2)
+                        this.currentMap2.geoObjects.events.add('click', this.onClick)
+                        this.objectManager2.removeAll()
+                    } catch (error) {
+                        console.log('no points!')
+                      }
+                  } catch (error) {
+                  console.log(error)
+                  }
+              })
+          }
+        },
+
+        changeMap() {
+          let filterData = {
+            datetime: `${this.filterParams.date}T8:00:00Z`,
+            time_group: this.filterParams.time - 1,
+            regions: this.filterParams.region,
+            weather: this.filterParams.weather,
+            light: this.filterParams.light,
+            categories: this.filterParams.category,
+            nearby: this.filterParams.location,
+            road_conditions: this.filterParams.roadCondition
+          }
+
+          if (this.isAllDays) filterData.datetime = null
+          if (filterData.time_group === -1) filterData.time_group = null
+
+          let filterDataString = ""
+          for (var key in filterData) {
+              if (filterData[key]) filterDataString += `${key}=${filterData[key]}&`
+          }
+
+          filterDataString = filterDataString.substring(0, filterDataString.length - 1)
+          console.log(filterDataString)
+
+          this.accidentPoints = []
+
+          axios.get(`${this.$store.state.backendUrl}/dtp/list/?${filterDataString}`
+          ).then(response => {
+              for (let i=0;i<response.data.length;i++){
+                let mapMarker = {
+                  type: 'Feature',
+                  id: response.data[i]["id"],
+                  geometry: {
+                      type: 'Point',
+                      coordinates: [response.data[i]["lat"], response.data[i]["long"]]
+                  }
+                }
+                this.accidentPoints.push(mapMarker)
+              }
+              console.log(this.accidentPoints)
+              this.objectManager.removeAll()
+              this.objectManager.add(this.accidentPoints)
+              console.log("Updated!")
+              }
+            )
+        },
+
+        changeCameraMap() {
+          let filterData = {
+            datetime: `${this.filterParams.date}T8:00:00Z`,
+            time_group: this.filterParams.time - 1,
+            regions: this.filterParams.region,
+            weather: this.filterParams.weather,
+            light: this.filterParams.light,
+            categories: this.filterParams.category,
+            nearby: this.filterParams.location,
+            road_conditions: this.filterParams.roadCondition
+          }
+
+          if (this.isAllDays) filterData.datetime = null
+          if (filterData.time_group === -1) filterData.time_group = null
+
+          let filterDataString = "?"
+          for (var key in filterData) {
+              if (filterData[key]) filterDataString += `${key}=${filterData[key]}&`
+          }
+
+          filterDataString = filterDataString.substring(0, filterDataString.length - 1)
+          this.accidentPoints2 = []
+          axios.get(`${this.$store.state.backendUrl}/claster/${this.quontityPatrolls}/${filterDataString}` 
+          ).then(response => {
+              for (let i=0; i<response.data.length;i++){
+                axios.post(`${this.$store.state.backendUrl}/dtp/some/`, {"ids": response.data[i].points}
+                ).then(response => {
+
+                for (let i=0;i<response.data.length;i++){
+                  let mapmarker = {
+                    type: 'Feature',
+                    id: response.data[i]["id"],
+                    geometry: {
+                        type: 'Point',
+                        coordinates: [response.data[i]["lat"], response.data[i]["long"]]
+                    }
+                  }
+                  this.accidentPoints2.push(mapmarker)
+                  this.accidentInfo.push({
+                      "id": 44936,
+                      "datetime": "2019-01-01T14:04:00Z",
+                      "parent_region": "Санкт-Петербург",
+                      "region": "Невский район",
+                      "address": "г Санкт-Петербург, ул Бабушкина, у дома 6 по Ивановс",
+                      "lat": 59.875683,
+                      "long": 30.444853,
+                      "category": "Столкновение",
+                      "deaths": 0,
+                      "injured": 1,
+                      "light": "Светлое время суток",
+                      "weather": [
+                          "Снегопад"
+                      ],
+                      "nearby": [
+                          "Многоквартирные жилые дома",
+                          "Остановка общественного транспорта",
+                          "Регулируемый перекресток",
+                          "Подземный пешеходный переход"
+                      ],
+                      "road_conditions": [
+                          "Недостатки зимнего содержания",
+                          "Заснеженное"
+                      ]
+                  })
+                }
+                this.objectManager2.removeAll()
+                this.objectManager2.add(this.accidentPoints2)
+                console.log("Updated2!")
+            })}
+          })
+        }
+    },
+
+    created: function(){
+      if (this.$store.state.token) {
+        this.logged = true 
+      }
+    }
+}
+</script>
+
+<style scoped>
+    #map {
+        width: 800px; 
+        height: 800px;
+        margin: 0 auto;
+        margin-top: 20px;
+    }
+    #map2 {
+        width: 800px; 
+        height: 800px;
+        margin: 0 auto;
+        margin-top: 20px;
+    }
+    .report-col {
+        margin-left: 300px;
+    }
+    .report-msg {
+        margin-bottom: 30px;
+    }
+    .row {
+      padding: 0px 30px;
+    }
+    label {
+       color: black; 
+       font-weight: 600;
+    }
+    #isBigger {
+      height: 800px;
+    }
+</style>
+
