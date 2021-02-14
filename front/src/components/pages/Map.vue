@@ -1,11 +1,11 @@
 <template>
   <div>
     <br>
-    <v-container style="width: 1000px;" v-bind:class="{ isBigger: isAllDays }">
+    <v-container v-bind:class="{ isBigger: isAllDays }">
       <v-card>
         <v-row>
           <!-- Select Regions -->
-          <v-col cols="6">
+          <v-col cols="3">
             <label for="region_filter">Регион:</label>
             <v-select
             id="region_filter"
@@ -14,11 +14,11 @@
             :value="filterParams.region"
             placeholder="Пушкинский район"
             @change="changeMap"
-          ></v-select>
+            ></v-select>
           </v-col>
 
           <!-- Select Road Conditions -->
-          <v-col cols="6">
+          <v-col cols="3">
             <label for="road_conditions_filter">Дорожные условия:</label>
             <v-select
             id="road_conditions_filter"
@@ -29,11 +29,9 @@
             @change="changeMap"
           ></v-select>
           </v-col>
-        </v-row>
 
-        <v-row>
           <!-- Select Light -->
-          <v-col cols="6">
+          <v-col cols="3">
             <label for="light_filter">Освещение</label>
             <v-select
             id="light_filter"
@@ -43,8 +41,19 @@
           ></v-select>
           </v-col>
 
+          <!-- Input quontity of pattrols -->
+          <v-col cols="3" v-if="logged" class="mt-6">
+            <v-text-field 
+            label="Рассчитать места концентрации"
+            v-model="quontityPatrolls"
+            :rules="rules"
+            ></v-text-field>
+          </v-col>
+        </v-row>
+
+        <v-row>
           <!-- Select Weather -->
-          <v-col cols="6">
+          <v-col cols="3">
             <label for="weather_filter">Погода</label>
             <v-select
             id="weather_filter"
@@ -55,11 +64,9 @@
             placeholder="Снегопад"
           ></v-select>
           </v-col>
-        </v-row>
 
-        <v-row>
           <!-- Select DTP's Category -->
-          <v-col cols="6">
+          <v-col cols="3">
             <label for="category_filter">Тип ДТП:</label>
             <v-select
             id="category_filter"
@@ -67,35 +74,25 @@
             v-model="filterParams.category"
             @change="changeMap"
           ></v-select>
-          </v-col>
+            </v-col>
 
-        <!-- Select location -->
-          <v-col cols="6">
-            <label for="location_filter">Место происшествия</label>
-            <v-select
-            id="location_filter"
-            :items="location"
-            v-model="filterParams.location"
-            @change="changeMap"
-          ></v-select>
-          </v-col>
-        </v-row>
+          <!-- Select location -->
+            <v-col cols="3">
+              <label for="location_filter">Место происшествия</label>
+              <v-select
+              id="location_filter"
+              :items="location"
+              v-model="filterParams.location"
+              @change="changeMap"
+            ></v-select>
+            </v-col>
 
-        <v-row v-if="logged">
-          <!-- Input quontity of pattrols -->
-            <v-text-field 
-            label="Рассчитать количество камер"
-            v-model="quontityPatrolls"
-            :rules="rules"
-            ></v-text-field>
-        </v-row>
-
-        <v-row v-if="logged">
-            <v-btn
-            elevation="2"
-            width="900px"
-            @click="changeCameraMap"
-          >Рассчитать положение камер</v-btn>
+            <v-col cols="3" v-if="logged" class="mt-8">
+              <v-btn
+                elevation="2"
+                @click="changeCameraMap"
+              >Рассчитать места концентрации</v-btn>
+            </v-col>
         </v-row>
 
         <v-row>
@@ -152,9 +149,44 @@
               @map-was-initialized="getMapInstance2"
           >
           </yandex-map>
+          <v-row class="two-buttons">
+            <v-btn
+            id="access-button" 
+            @click="changeAccessToMap()"
+            :disabled="isCurse"
+            >
+              Поставить точку
+            </v-btn>
+            <v-btn
+            id="delete-button" 
+            @click="deleteUserPoint()"
+            :disabled="(isCurse && (user_placemark==null)) || isCurse || !user_placemark"
+            >
+              Удалить точку
+            </v-btn>
+          </v-row>
         </v-col>
       </v-row>
       <br>
+      <v-data-table
+        :headers="tableHeaders"
+        :items="accidentInfo"
+        :search="tableSearch"
+        group-by="Кластер"
+        show-group-by
+      >
+      </v-data-table>
+      <v-spacer></v-spacer>
+      <v-container style="width: 1000px;">
+        <v-select
+          label="Укажите формат файла" 
+          :items="formats"
+          v-model="file_format"
+          ></v-select>
+          <v-btn id="download-button" @click="getFile()">Скачать файл</v-btn>
+      </v-container>
+      <v-container height="100px"></v-container>
+      <hr>
   </div>
 </template>
 
@@ -168,6 +200,23 @@
     },
 
     data: () => ({
+      tableSearch: '',
+      tableHeaders: [
+        {
+          text: 'Кластер',
+          align: 'start',
+          filterable: true,
+          value: 'id_cluster',
+        },
+        { text: 'Тип ДТП', value: 'category', filterable: true, groupable: false, },
+        { text: 'Дата', value: 'datetime', filterable: true, groupable: false, },
+        { text: 'Количество пострадавших', value: 'injured', filterable: true, groupable: false, },
+        { text: 'Количество погибших', value: 'deaths', filterable: true, groupable: false, },
+        { text: 'Условия освещения', value: 'light', filterable: true, groupable: false, },
+        { text: 'Дорожные условия', value: 'road_conditions', filterable: true, groupable: false, },
+        { text: 'Погода', value: 'weather', filterable: true, groupable: false, },
+      ],
+
       logged: false,
 
       //for init of maps
@@ -185,11 +234,31 @@
       objectManager: null,
       accidentPoints: [],
 
+      isCurse: true,
+      user_point: {
+        coords: null,
+        points: null,
+      },
+      user_placemark: null,
+
+
       //for init of second map
       currentMap2: null,
       objectManager2: null,
-      accidentPoints2: [],
+      clasters: [],
       accidentInfo: [],
+
+      fromBackendClasters: null,
+      clasterCounter: 1,
+      points: null,
+
+      
+      file_format: null,
+      formats: [
+        'csv',
+        'xlsx',
+        'json'
+      ],
 
       //for map's filter
       isAllDays: true, 
@@ -374,102 +443,191 @@
     }),
 
     methods: {
-        onClick(e) {
-          console.log("pressed!")
-            // this.accidentPoints = []
-            // let target = e.get('objectId');
-            // if (this.objectManager.clusters.getById(target)) {
-            //     let objects = this.objectManager.clusters.getById(target).properties.geoObjects
-            //     objects.forEach(element => {
-            //         axios({
-            //             method: 'GET',
-            //             url: `${this.$store.state.backendUrl}/dtp/${element.id}/`
-            //         }).then(response => {
-            //             this.accidentInfo.push(response.data)
-            //         })
-            //     });
-            // }
-            // else {
-            //     axios({
-            //             method: 'GET',
-            //             url: `${this.$store.state.backendUrl}${target}/`
-            //         }).then(response => {
-            //             this.push(response.data)
-            //         })
-            // }
-        },
-
-        async getMapInstance(map) {
-          if(map) {
-            axios.get(`${this.$store.state.backendUrl}/dtp/list/?weather=Снегопад&regions=Пушкинский район&road_conditions=Отсутствие, плохая различимость горизонтальной разметки проезжей части`
-            ).then(response => {
-                for (let i=0;i<response.data.length;i++){
-                  let mapMarker = {
-                    type: 'Feature',
-                    id: response.data[i]["id"],
-                    geometry: {
-                        type: 'Point',
-                        coordinates: [response.data[i]["lat"], response.data[i]["long"]]
-                    }
-                  }
-                  this.accidentPoints.push(mapMarker)
+      drawTheTable(someClusters, target){
+        this.accidentInfo = []
+        console.log("TTTTTTTTAAAAAAAABBBBLLLLLEEEEE")
+        console.log(someClusters)
+        for (let j=0;j<someClusters.length;j++){
+          axios.post(`${this.$store.state.backendUrl}/dtp/some/`, {"ids": someClusters[j].points}
+        ).then(response => {
+            for (let i=0;i<response.data.length;i++){
+              this.accidentInfo.push(
+                {
+                  "id_cluster": target,
+                  "id": response.data[i]["id"],
+                  "datetime": response.data[i]["datetime"],
+                  "category": response.data[i]["category"],
+                  "deaths": response.data[i]["deaths"],
+                  "injured": response.data[i]["injured"],
+                  "light": response.data[i]["light"],
+                  "weather": response.data[i]["weather"],
+                  "road_conditions": response.data[i]["road_conditions"]
                 }
-                  try {
-                    this.currentMap = map
-                    this.objectManager = new ymaps.ObjectManager({
-                        clusterize: true,
-                        gridSize: 32,
-                        clusterDisableClickZoom: true
-                    })
-                    try {
-                        this.objectManager.add(this.accidentPoints)
-                        this.currentMap.geoObjects.add(this.objectManager)
-                        this.currentMap.geoObjects.events.add('click', this.onClick)
-                    } catch (error) {
-                        console.log('no points!')
-                      }
-                  } catch (error) {
-                  console.log(error)
-                  }
-              })
-          }
-        },
+              )
+            }
+          })
+        }
+      },
 
-        async getMapInstance2(map2) {
-          if(map2) {
-            axios.get(`${this.$store.state.backendUrl}/dtp/list/?weather=Снегопад&regions=Пушкинский район&road_conditions=Отсутствие, плохая различимость горизонтальной разметки проезжей части`
-            ).then(response => {
-                let mapmarker = {
+      onClickClaster(e) {
+        let target = e.get('objectId')
+        this.drawTheTable(this.fromBackendClasters, target)
+      },
+
+      onClickUserPoint(e) {
+        if (this.isCurse) {
+          if (this.user_placemark) {this.currentMap2.geoObjects.remove(this.user_placemark)}
+
+          this.user_point.coords = e.get('coords')
+
+          let filterData = {
+            datetime: `${this.filterParams.date}T8:00:00Z`,
+            time_group: this.filterParams.time - 1,
+            regions: this.filterParams.region,
+            weather: this.filterParams.weather,
+            light: this.filterParams.light,
+            categories: this.filterParams.category,
+            nearby: this.filterParams.location,
+            road_conditions: this.filterParams.roadCondition
+          }
+          if (this.isAllDays) filterData.datetime = null
+          if (filterData.time_group === -1) filterData.time_group = null
+
+          let filterDataString = "?"
+          for (var key in filterData) {
+              if (filterData[key]) filterDataString += `${key}=${filterData[key]}&`
+          }
+          filterDataString = filterDataString.substring(0, filterDataString.length - 1)
+
+          axios.post(`${this.$store.state.backendUrl}/dtp/range/${filterDataString}`,{
+              lat: this.user_point.coords[0],
+              long: this.user_point.coords[1]
+          }).then(response => {
+              let points = []
+              response.data.forEach(element => {
+                points.push(element.id)
+              })
+              this.user_point.points = points
+          })
+
+          this.user_placemark = new ymaps.Placemark(this.user_point.coords)
+          this.currentMap2.geoObjects.add(this.user_placemark)
+          this.isCurse = false
+
+          this.drawTheTable(this.user_point, this.clasterCounter)
+        }
+      },
+
+      changeAccessToMap() {
+        this.isCurse = !this.isCurse
+      },
+
+      deleteUserPoint() {
+        this.currentMap2.geoObjects.remove(this.user_placemark)
+        this.user_placemark = null
+      },
+
+      async getMapInstance(map) {
+        if(map) {
+          axios.get(`${this.$store.state.backendUrl}/dtp/list/?weather=Снегопад&regions=Пушкинский район&road_conditions=Отсутствие, плохая различимость горизонтальной разметки проезжей части`
+          ).then(response => {
+              for (let i=0;i<response.data.length;i++){
+                let mapMarker = {
                   type: 'Feature',
-                  id: response.data[0]["id"],
+                  id: response.data[i]["id"],
                   geometry: {
                       type: 'Point',
-                      coordinates: [response.data[0]["lat"], response.data[0]["long"]]
+                      coordinates: [response.data[i]["lat"], response.data[i]["long"]]
                   }
                 }
-                  this.accidentPoints2.push(mapmarker)
+                this.accidentPoints.push(mapMarker)
+              }
+                try {
+                  this.currentMap = map
+                  this.objectManager = new ymaps.ObjectManager({
+                      clusterize: true,
+                      gridSize: 32,
+                      clusterDisableClickZoom: true
+                  })
+                  this.currentMap.geoObjects.events.add('click', (e) => {
+                    let target = e.get('objectId');
+                    if (this.objectManager.clusters.getById(target)) {
+                      let cluster = this.objectManager.clusters.getById(target)
+
+                      let objects = cluster.properties.geoObjects
+                      let buf = []
+                      objects.forEach(element => {
+                        buf.push(element.id)
+                      });
+
+                      axios.post(`${this.$store.state.backendUrl}/dtp/some/`,{
+                        ids: buf
+                      }).then(response => {
+                        let data = response.data
+                      })
+                    }
+                    else {
+                      let point = this.objectManager.objects.getById(target)
+
+                      axios.get(`${this.$store.state.backendUrl}/dtp/retrieve/${target}/`
+                      ).then(response => {
+                        let data = response.data
+                        point.properties.hintContent = data.category + " " + data.datetime
+                        point.properties.balloonContent = data.category + " " + data.datetime
+                      })
+                    }
+                  })
+                  try {
+                      this.objectManager.add(this.accidentPoints)
+                      this.currentMap.geoObjects.add(this.objectManager)
+                  } catch (error) {
+                      console.log('no points!')
+                    }
+                } catch (error) {
+                console.log(error)
+                }
+            })
+        }
+      },
+
+      async getMapInstance2(map2) {
+        if(map2) {
+          axios.get(`${this.$store.state.backendUrl}/dtp/list/?weather=Снегопад&regions=Пушкинский район&road_conditions=Отсутствие, плохая различимость горизонтальной разметки проезжей части`
+          ).then(response => {
+              let mapmarker = {
+                type: 'Feature',
+                id: response.data[0]["id"],
+                geometry: {
+                    type: 'Point',
+                    coordinates: [response.data[0]["lat"], response.data[0]["long"]]
+                }
+              }
+                this.clasters.push(mapmarker)
+
+                try {
+                  this.currentMap2 = map2
+                  this.objectManager2 = new ymaps.ObjectManager({
+                      clusterize: true,
+                      gridSize: 32,
+                      clusterDisableClickZoom: true
+                  })
+
+                  this.currentMap2.events.add('click', this.onClickUserPoint)
 
                   try {
-                    this.currentMap2 = map2
-                    this.objectManager2 = new ymaps.ObjectManager({
-                        clusterize: true,
-                        gridSize: 32,
-                        clusterDisableClickZoom: true
-                    })
-                    try {
-                        this.objectManager2.add(this.accidentPoints2)
-                        this.currentMap2.geoObjects.add(this.objectManager2)
-                        this.currentMap2.geoObjects.events.add('click', this.onClick)
-                        this.objectManager2.removeAll()
-                    } catch (error) {
-                        console.log('no points!')
-                      }
+                      this.objectManager2.add(this.clasters)
+                      this.currentMap2.geoObjects.add(this.objectManager2)
+                      this.currentMap2.geoObjects.events.add('click', this.onClickClaster)
+                      this.objectManager2.removeAll()
                   } catch (error) {
-                  console.log(error)
-                  }
-              })
-          }
-        },
+                      console.log('no points!')
+                    }
+                } catch (error) {
+                console.log(error)
+                }
+            })
+        }
+      },
 
         changeMap() {
           let filterData = {
@@ -492,7 +650,6 @@
           }
 
           filterDataString = filterDataString.substring(0, filterDataString.length - 1)
-          console.log(filterDataString)
 
           this.accidentPoints = []
 
@@ -509,10 +666,8 @@
                 }
                 this.accidentPoints.push(mapMarker)
               }
-              console.log(this.accidentPoints)
               this.objectManager.removeAll()
               this.objectManager.add(this.accidentPoints)
-              console.log("Updated!")
               }
             )
         },
@@ -538,62 +693,53 @@
           }
 
           filterDataString = filterDataString.substring(0, filterDataString.length - 1)
-          this.accidentPoints2 = []
+          this.clasters = []
+          this.fromBackendClasters = []
           axios.get(`${this.$store.state.backendUrl}/claster/${this.quontityPatrolls}/${filterDataString}` 
           ).then(response => {
-              for (let i=0; i<response.data.length;i++){
-                axios.post(`${this.$store.state.backendUrl}/dtp/some/`, {"ids": response.data[i].points}
-                ).then(response => {
-
-                for (let i=0;i<response.data.length;i++){
-                  let mapmarker = {
-                    type: 'Feature',
-                    id: response.data[i]["id"],
-                    geometry: {
-                        type: 'Point',
-                        coordinates: [response.data[i]["lat"], response.data[i]["long"]]
-                    }
-                  }
-                  this.accidentPoints2.push(mapmarker)
-                  this.accidentInfo.push({
-                      "id": 44936,
-                      "datetime": "2019-01-01T14:04:00Z",
-                      "parent_region": "Санкт-Петербург",
-                      "region": "Невский район",
-                      "address": "г Санкт-Петербург, ул Бабушкина, у дома 6 по Ивановс",
-                      "lat": 59.875683,
-                      "long": 30.444853,
-                      "category": "Столкновение",
-                      "deaths": 0,
-                      "injured": 1,
-                      "light": "Светлое время суток",
-                      "weather": [
-                          "Снегопад"
-                      ],
-                      "nearby": [
-                          "Многоквартирные жилые дома",
-                          "Остановка общественного транспорта",
-                          "Регулируемый перекресток",
-                          "Подземный пешеходный переход"
-                      ],
-                      "road_conditions": [
-                          "Недостатки зимнего содержания",
-                          "Заснеженное"
-                      ]
-                  })
+            this.fromBackendClasters = response.data
+            for (let i=0; i<response.data.length;i++){
+              let claster = {
+                type: 'Feature',
+                id: this.clasterCounter,
+                geometry: {
+                    type: 'Point',
+                    coordinates: [response.data[i]["lat"], response.data[i]["long"]]
+                },
+                properties: {
+                    hintContent: response.data[i]["points"],
+                },
+                options: {
+                    preset: "islands#dotIcon",
+                    iconColor: "red"
                 }
-                this.objectManager2.removeAll()
-                this.objectManager2.add(this.accidentPoints2)
-                console.log("Updated2!")
-            })}
+              }
+              
+              this.clasterCounter += 1
+              this.clasters.push(claster)
+            }
+
+            this.objectManager2.removeAll()
+            this.objectManager2.add(this.clasters)
+            console.log("Updated2!")
           })
-        }
+        },
+
+        getFile() {
+          axios.post(`${this.$store.state.backendUrl}/file/get/`, this.fromBackendClasters).then(
+            response => {
+              window.open(`${this.$store.state.backendUrl}/file/get/${response.data}/${this.file_format}/`);
+            }
+          )
+        },
     },
 
     created: function(){
       if (this.$store.state.token) {
         this.logged = true 
       }
+      // console.log(this.isCurse)
+      // console.log(this.user_placemark == null)
     }
 }
 </script>
@@ -627,5 +773,32 @@
     #isBigger {
       height: 800px;
     }
+    #stat {
+      margin: auto;
+      width: auto;
+    }
+
+    th {
+      background-color: #212F3C;
+      color: white;
+    }
+
+    #download-button, #access-button, #delete-button {
+      position: relative;
+      left: 50%;
+      transform: translate(-50%, 0);
+      width: 300px;
+    }
+
+    #access-button, #delete-button {
+      margin-top: 30px;
+      margin-right: 10px;
+    }
+
+    .two-buttons {
+      margin: auto;
+      padding-right: 320px;
+    }
+
 </style>
 

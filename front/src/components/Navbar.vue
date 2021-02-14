@@ -4,7 +4,7 @@
     justify="center"
     id="navbar">
       <v-col cols=2>
-        <h1 id="safety-map">Safety Map</h1>
+        <h1 id="safety-map"><router-link :to="{name: 'home'}" class="no-link-decoration">Safety Map</router-link></h1>
       </v-col>
       <v-col cols=3
       class="text-center">
